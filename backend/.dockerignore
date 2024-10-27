@@ -32,4 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
+.gitignore
+.dockerignore
+.env.example
 .env
