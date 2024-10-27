@@ -1,0 +1,58 @@
+services:
+  postgres-spring:
+    image: postgres:13
+    container_name: postgres-spring
+    ports:
+      - 9998:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: spring
+    volumes:
+      - data_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - spring
+
+  spring-app:
+    container_name: spring-app
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - 8081:8081
+    depends_on:
+      postgres-spring:
+        condition: service_healthy
+    env_file:
+      - ./backend.env
+    networks:
+      - spring
+
+  next-app:
+    container_name: next-app
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - 4002:4002
+    depends_on:
+      spring-app:
+        condition: service_start
+    env_file:
+      - ./frontend/.env
+    networks:
+      - spring
+
+volumes:
+  data_postgres:
+networks:
+  spring:
+    driver: bridge
